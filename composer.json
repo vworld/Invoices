@@ -1,5 +1,5 @@
 {
-    "name": "consoletvs/invoices",
+    "name": "vworld/invoices",
     "description": "Generate PDF invoices for your customers in laravel",
     "type": "library",
     "keywords": [
