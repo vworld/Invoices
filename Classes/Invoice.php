@@ -1,12 +1,12 @@
 <?php
 /**
-  * This file is part of consoletvs/invoices.
-  *
-  * (c) Erik Campobadal <soc@erik.cat>
-  *
-  * For the full copyright and license information, please view the LICENSE
-  * file that was distributed with this source code.
-  */
+ * This file is part of consoletvs/invoices.
+ *
+ * (c) Erik Campobadal <soc@erik.cat>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
 
 namespace ConsoleTVs\Invoices\Classes;
 
@@ -14,6 +14,7 @@ use Carbon\Carbon;
 use ConsoleTVs\Invoices\Traits\Setters;
 use Illuminate\Support\Collection;
 use Storage;
+use NumberFormatter;
 
 /**
  * This is the Invoice class.
@@ -150,6 +151,15 @@ class Invoice
      */
     private $pdf;
 
+    public $status;
+    public $statusClass;
+    public $totalPaid;
+    public $payments;
+
+    // Create a NumberFormatter instance
+    private $priceFormatter;
+
+
     /**
      * Create a new invoice instance.
      *
@@ -174,6 +184,7 @@ class Invoice
         $this->due_date = config('invoices.due_date') != null ? Carbon::parse(config('invoices.due_date')) : null;
         $this->with_pagination = config('invoices.with_pagination');
         $this->duplicate_header = config('invoices.duplicate_header');
+        $this->priceFormatter = new NumberFormatter('en_US', NumberFormatter::CURRENCY);
     }
 
     /**
@@ -212,8 +223,8 @@ class Invoice
      * @method addItem
      *
      * @param string $name
-     * @param int    $price
-     * @param int    $ammount
+     * @param int $price
+     * @param int $ammount
      * @param string $id
      * @param string $imageUrl
      *
@@ -225,7 +236,7 @@ class Invoice
             'name'       => $name,
             'price'      => $price,
             'ammount'    => $ammount,
-            'totalPrice' => number_format(bcmul($price, $ammount, $this->decimals), $this->decimals),
+            'totalPrice' => $this->priceFormatter->formatCurrency(bcmul($price, $ammount, $this->decimals), $this->currency),
             'id'         => $id,
             'imageUrl'   => $imageUrl,
         ]));
@@ -256,7 +267,7 @@ class Invoice
      */
     public function formatCurrency()
     {
-        $currencies = json_decode(file_get_contents(__DIR__.'/../Currencies.json'));
+        $currencies = json_decode(file_get_contents(__DIR__ . '/../Currencies.json'));
         $currency = $this->currency;
 
         return $currencies->$currency;
@@ -309,7 +320,23 @@ class Invoice
      */
     public function totalPriceFormatted()
     {
-        return number_format($this->totalPrice(), $this->decimals);
+        // Format the number as currency
+        return $this->priceFormatter->formatCurrency($this->totalPrice(), $this->currency);
+    }
+
+    public function totalPaidFormatted()
+    {
+        return $this->priceFormatter->formatCurrency($this->totalPaid, $this->currency);
+    }
+
+    public function currentDueFormatted()
+    {
+        return $this->priceFormatter->formatCurrency(($this->totalPrice() - $this->totalPaid), $this->currency);
+    }
+
+    public function formatCCY($number)
+    {
+        return $this->priceFormatter->formatCurrency($number, $this->currency);
     }
 
     /**
@@ -319,11 +346,11 @@ class Invoice
      *
      * @return float
      */
-    private function taxPrice(Object $tax_rate = null)
+    private function taxPrice(object $tax_rate = null)
     {
         if (is_null($tax_rate)) {
             $tax_total = 0;
-            foreach($this->tax_rates as $taxe){
+            foreach ($this->tax_rates as $taxe) {
                 if ($taxe['tax_type'] == 'percentage') {
                     $tax_total += bcdiv(bcmul($taxe['tax'], $this->subTotalPrice(), $this->decimals), 100, $this->decimals);
                     continue;
@@ -332,7 +359,7 @@ class Invoice
             }
             return $tax_total;
         }
-        
+
         if ($tax_rate->tax_type == 'percentage') {
             return bcdiv(bcmul($tax_rate->tax, $this->subTotalPrice(), $this->decimals), 100, $this->decimals);
         }
@@ -416,15 +443,15 @@ class Invoice
     /**
      * Return true/false if one item contains image.
      * Determine if we should display or not the image column on the invoice.
-     * 
+     *
      * @method shouldDisplayImageColumn
      *
      * @return boolean
      */
     public function shouldDisplayImageColumn()
     {
-        foreach($this->items as $item){
-            if($item['imageUrl'] != null){
+        foreach ($this->items as $item) {
+            if ($item['imageUrl'] != null) {
                 return true;
             }
         }

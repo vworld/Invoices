@@ -1,12 +1,12 @@
 <?php
 /**
-  * This file is part of consoletvs/invoices.
-  *
-  * (c) Erik Campobadal <soc@erik.cat>
-  *
-  * For the full copyright and license information, please view the LICENSE
-  * file that was distributed with this source code.
-  */
+ * This file is part of consoletvs/invoices.
+ *
+ * (c) Erik Campobadal <soc@erik.cat>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
 
 namespace ConsoleTVs\Invoices\Traits;
 
@@ -225,6 +225,36 @@ trait Setters
         return $this;
     }
 
+    public function status($status)
+    {
+        $this->status = $status;
+        switch (strtolower($status)) {
+            case 'paid':
+                $this->statusClass = 'success-text';
+                break;
+            case 'unpaid':
+                $this->statusClass = 'danger-text';
+                break;
+            case 'cancelled':
+                $this->statusClass = 'warning-text';
+                break;
+            case 'refunded':
+                $this->statusClass = 'refunded-text';
+                break;
+        }
 
-    
+        return $this;
+    }
+
+    public function totalPaid($totalPaid)
+    {
+        $this->totalPaid = $totalPaid;
+        return $this;
+    }
+
+    public function payments($payments)
+    {
+        $this->payments = $payments;
+        return $this;
+    }
 }

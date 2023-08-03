@@ -1,12 +1,12 @@
 <?php
 /**
-  * This file is part of consoletvs/invoices.
-  *
-  * (c) Erik Campobadal <soc@erik.cat>
-  *
-  * For the full copyright and license information, please view the LICENSE
-  * file that was distributed with this source code.
-  */
+ * This file is part of consoletvs/invoices.
+ *
+ * (c) Erik Campobadal <soc@erik.cat>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
 
 namespace ConsoleTVs\Invoices\Classes;
 
@@ -27,7 +27,7 @@ class PDF
      * @method generate
      *
      * @param ConsoleTVs\Invoices\Classes\Invoice $invoice
-     * @param string                              $template
+     * @param string $template
      *
      * @return Dompdf\Dompdf
      */
@@ -44,9 +44,9 @@ class PDF
 
         $context = stream_context_create([
             'ssl' => [
-                'verify_peer'      => false,
-                'verify_peer_name' => false,
-                'allow_self_signed'=> true,
+                'verify_peer'       => false,
+                'verify_peer_name'  => false,
+                'allow_self_signed' => true,
             ],
         ]);
 
@@ -54,7 +54,7 @@ class PDF
 
         $GLOBALS['with_pagination'] = $invoice->with_pagination;
 
-        $pdf->loadHtml(View::make('invoices::'.$template, ['invoice' => $invoice]));
+        $pdf->loadHtml(View::make('invoices::' . $template, ['invoice' => $invoice]));
         $pdf->render();
 
         return $pdf;
